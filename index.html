@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ebook Library</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,sans-serif;background:#fff;color:#111}
+  header{
+    background:#fff;
+    padding:22px 28px;
+    border-bottom:1px solid #e5e5e5;
+  }
+  h1{font-size:21px;font-weight:600;color:#1a1a1a}
+  header span{font-size:13px;color:#aaa;display:block;margin-top:3px}
+  main{max-width:680px;margin:36px auto;padding:0 24px}
+  .upload-box{
+    background:#f8f9ff;
+    border:1.5px dashed #b0bcf5;
+    border-radius:12px;
+    padding:28px;
+    text-align:center;
+    margin-bottom:32px;
+  }
+  .upload-box p{color:#999;margin-bottom:12px;font-size:14px}
+  .upload-box input{display:none}
+  .btn{background:#6B7FD7;color:#fff;border:none;padding:10px 22px;border-radius:8px;font-size:14px;cursor:pointer}
+  .btn:hover{background:#5a6ec4}
+  #msg{margin-top:10px;font-size:13px;color:#6B7FD7;min-height:18px}
+  .section-title{
+    font-size:13px;font-weight:600;
+    color:#999;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    margin-bottom:14px;
+  }
+  .book{
+    background:#fff;
+    border:1px solid #ebebeb;
+    border-radius:10px;
+    padding:16px 20px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-bottom:10px;
+  }
+  .book:hover{border-color:#b0bcf5;}
+  .book-name{flex:1;font-size:15px;font-weight:500;color:#222}
+  .dl{
+    background:#f0f2fc;
+    color:#6B7FD7;
+    text-decoration:none;
+    padding:8px 16px;
+    border-radius:8px;
+    font-size:14px;
+    font-weight:500;
+  }
+  .dl:hover{background:#e2e6f9}
+</style>
+</head>
+<body>
+<header>
+  <h1>📚 Ebook Library</h1>
+  <span id="count"></span>
+</header>
+<main>
+
+  <div class="upload-box">
+    <p>Upload a PDF book</p>
+    <button class="btn" onclick="document.getElementById('f').click()">Choose PDF</button>
+    <input type="file" id="f" accept=".pdf" onchange="upload(this.files[0])"/>
+    <div id="msg"></div>
+  </div>
+
+  <div class="section-title">Available Books</div>
+  <div id="list"></div>
+
+</main>
+<script>
+  const SERVER = "https://ebook-server-prc7.onrender.com";
+
+  async function load() {
+    const res = await fetch(SERVER + "/books");
+    const books = await res.json();
+    const list = document.getElementById("list");
+    document.getElementById("count").textContent = books.length + (books.length === 1 ? " book" : " books");
+    if (!books.length) { list.innerHTML = '<p style="color:#bbb;font-size:14px">No books yet.</p>'; return; }
+    list.innerHTML = books.map(b => `
+      <div class="book">
+        <span>📖</span>
+        <span class="book-name">${b.name.replace(".pdf","")}</span>
+        <a class="dl" href="${SERVER}/uploads/${b.name}" download>Download</a>
+      </div>
+    `).join("");
+  }
+
+  async function upload(file) {
+    if (!file) return;
+    document.getElementById("msg").textContent = "Uploading...";
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch(SERVER + "/upload", { method: "POST", body: form });
+    const data = await res.json();
+    document.getElementById("msg").textContent = data.success ? "✅ Done!" : "❌ Failed";
+    load();
+  }
+
+  load();
+</script>
+</body>
+</html>
